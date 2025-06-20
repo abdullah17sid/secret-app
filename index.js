@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const ejs = require("ejs");
+require("dotenv").config();
 
 const app = express();
 
@@ -9,15 +10,10 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// MongoDB connection
-mongoose.connect("mongodb://localhost:27017/secrets", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-}).then(() => {
-    console.log("Connected to MongoDB successfully");
-}).catch((err) => {
-    console.log("MongoDB connection error:", err);
-});
+
+mongoose.connect("mongodb+srv://abdullahsmsiddiqui:ZU35mdAOLGwh5hta@cluster0.akqftz8.mongodb.net/secrets?retryWrites=true&w=majority&appName=Cluster0")
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.log("MongoDB connection error:", err));
 
 // Schema and Model
 const userSchema = new mongoose.Schema({
