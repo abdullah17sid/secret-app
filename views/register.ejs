@@ -6,28 +6,64 @@
         <div class="col-sm-8">
             <div class="card">
                 <div class="card-body">
-                    <form action="/register" method="POST">
+                    <form action="/register" method="POST" onsubmit="return validatePassword()">
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <input type="email" class="form-control" name="username">
+                            <input type="email" class="form-control" name="username" required>
                         </div>
                         <div class="form-group">
                             <label for="password">Password</label>
-                            <input type="password" id="register-password" class="form-control" name="password" required>
+                            <input 
+                                type="password" 
+                                id="register-password" 
+                                class="form-control" 
+                                name="password" 
+                                required
+                                pattern="^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                                title="Password must be at least 8 characters, include uppercase, lowercase, number, and special character."
+                                oninput="checkPassword()"
+                            >
                             <label>
-            <input type="checkbox" onclick="togglePassword('register-password')"> Show Password
-        </label><br>
+                                <input type="checkbox" onclick="togglePassword('register-password')"> Show Password
+                            </label>
+                            <small id="passwordHelp" class="form-text text-muted text-danger"></small>
                         </div>
                         <button type="submit" class="btn btn-dark">Register</button>
                     </form>
                 </div>
             </div>
         </div>
-    <!-- </div>
-</div> -->
-  <script>
-        function togglePassword(id) {
-            const field = document.getElementById(id);
-            field.type = field.type === "password" ? "text" : "password";
+    </div>
+</div>
+
+<script>
+    function togglePassword(id) {
+        const field = document.getElementById(id);
+        field.type = field.type === "password" ? "text" : "password";
+    }
+
+    function checkPassword() {
+        const password = document.getElementById("register-password").value;
+        const helpText = document.getElementById("passwordHelp");
+
+        const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+        if (!regex.test(password)) {
+            helpText.textContent = "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.";
+        } else {
+            helpText.textContent = "";
         }
-    </script>
+    }
+
+    function validatePassword() {
+        const password = document.getElementById("register-password").value;
+        const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+        if (!regex.test(password)) {
+            alert("Please enter a valid password that meets all the requirements.");
+            return false;
+        }
+
+        return true;
+    }
+</script>
