@@ -10,7 +10,7 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-
+// MongoDB Connection
 mongoose.connect("mongodb+srv://abdullahsmsiddiqui:ZU35mdAOLGwh5hta@cluster0.akqftz8.mongodb.net/secrets?retryWrites=true&w=majority&appName=Cluster0")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("MongoDB connection error:", err));
@@ -20,7 +20,6 @@ const userSchema = new mongoose.Schema({
     email: String,
     password: String
 });
-
 const User = mongoose.model("User", userSchema);
 
 // Home Page
@@ -52,7 +51,7 @@ app.post("/register", async (req, res) => {
 
 // Login Page
 app.get("/login", (req, res) => {
-    res.render("login");
+    res.render("login", { message: null });
 });
 
 // Handle Login
@@ -61,47 +60,48 @@ app.post("/login", async (req, res) => {
     const password = req.body.password?.trim();
 
     if (!email || !password) {
-        return res.send("Please enter both email and password.");
+        return res.render("login", { message: "Please enter both email and password." });
     }
 
     try {
         const foundUser = await User.findOne({ email: email });
 
         if (!foundUser) {
-            return res.send("User not found. Please register first.");
+            return res.render("login", { message: "User not found. Please register first." });
         }
 
-       if (foundUser.password === password) {
-    res.render("profile", { user: foundUser }); // Pass user info if needed
-}
-else {
-            res.send("Incorrect password.");
+        if (foundUser.password === password) {
+            res.render("secrets", { message: "Welcome back, " + foundUser.email + "!" });
+        } else {
+            res.render("login", { message: "Incorrect password." });
         }
     } catch (err) {
         console.log("Error during login:", err);
-        res.status(500).send("Something went wrong during login.");
+        res.status(500).render("login", { message: "Something went wrong. Try again later." });
     }
 });
 
-// Secrets Page
+// Secrets Page (default view)
 app.get("/secrets", (req, res) => {
-    res.render("secrets");
+    res.render("secrets", { message: null });
 });
 
-// Logout Route - ✅ Fixed: No rendering of logout view
+// Logout
 app.get("/logout", (req, res) => {
     res.redirect("/");
 });
-// Submit Secret Page
+
+// Submit Page
 app.get("/submit", (req, res) => {
-    res.render("submit"); // Make sure submit.ejs exists in views/
+    res.render("submit");
 });
+
+// Handle Secret Submission
 app.post("/submit", (req, res) => {
     const submittedSecret = req.body.secret;
     console.log("Submitted secret:", submittedSecret);
-    res.send("Secret submitted successfully!");
+    res.render("secrets", { message: "Secret submitted successfully!" });
 });
-
 
 // Start Server
 app.listen(3000, () => {
