@@ -1,17 +1,11 @@
 <%- include('partials/header') %>
 
-<div class="jumbotron centered">
-    <div class="container">
-        <i class="fas fa-key fa-6x"></i>
-  <h1 class="display-3"><h1>Welcome, <%= user.email %>!</h1>
+<div class="container mt-5 text-center">
+    <h1>Welcome, <%= email %></h1>
+    <p>This is your protected profile page.</p>
+        <a class="btn btn-light" href="/logout">Logout</a>
 
-  <p class="lead"> This is your protected profile page.</p>
-  <hr>
-    <a class="btn btn-dark btn-lg" href="/secrets" role="button">Secrets</a>
-
-  </div>
+    <a class="btn btn-dark" href="/secrets?email=<%= email %>">Go to Secrets Page</a>
 </div>
 
-<%-include('partials/footer') %>
-
-
+<%- include('partials/footer') %>
