@@ -5,34 +5,32 @@ require("dotenv").config();
 
 const app = express();
 
-// Middleware setup
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
-// MongoDB Connection
 mongoose.connect("mongodb+srv://abdullahsmsiddiqui:ZU35mdAOLGwh5hta@cluster0.akqftz8.mongodb.net/secrets?retryWrites=true&w=majority&appName=Cluster0")
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => console.log("MongoDB connection error:", err));
 
-// Schema and Model
+// Schema
 const userSchema = new mongoose.Schema({
     email: String,
-    password: String
+    password: String,
+    secret: String
 });
 const User = mongoose.model("User", userSchema);
 
-// Home Page
+// Routes
+
 app.get("/", (req, res) => {
     res.render("home");
 });
 
-// Register Page
 app.get("/register", (req, res) => {
     res.render("register");
 });
 
-// Handle Registration
 app.post("/register", async (req, res) => {
     try {
         const newUser = new User({
@@ -41,20 +39,16 @@ app.post("/register", async (req, res) => {
         });
 
         await newUser.save();
-        console.log("User registered successfully");
         res.redirect("/login");
     } catch (err) {
-        console.log("Error during registration:", err);
         res.status(500).send("Registration failed");
     }
 });
 
-// Login Page
 app.get("/login", (req, res) => {
     res.render("login", { message: null });
 });
 
-// Handle Login
 app.post("/login", async (req, res) => {
     const email = req.body.username?.trim();
     const password = req.body.password?.trim();
@@ -64,46 +58,64 @@ app.post("/login", async (req, res) => {
     }
 
     try {
-        const foundUser = await User.findOne({ email: email });
+        const user = await User.findOne({ email: email });
 
-        if (!foundUser) {
+        if (!user) {
             return res.render("login", { message: "User not found. Please register first." });
         }
 
-        if (foundUser.password === password) {
-            res.render("secrets", { message: "Welcome back, " + foundUser.email + "!" });
+        if (user.password === password) {
+            // Redirect to profile with email in query
+            res.redirect(`/profile?email=${user.email}`);
         } else {
             res.render("login", { message: "Incorrect password." });
         }
     } catch (err) {
-        console.log("Error during login:", err);
-        res.status(500).render("login", { message: "Something went wrong. Try again later." });
+        res.status(500).render("login", { message: "Something went wrong during login." });
     }
 });
 
-// Secrets Page (default view)
-app.get("/secrets", (req, res) => {
-    res.render("secrets", { message: null });
+app.get("/profile", (req, res) => {
+    const email = req.query.email;
+    res.render("profile", { email: email });
 });
 
-// Logout
+app.get("/secrets", async (req, res) => {
+    try {
+        const secrets = await User.find({ secret: { $ne: null } });
+        res.render("secrets", { secrets: secrets, email: req.query.email || null, message: null });
+    } catch (err) {
+        res.status(500).render("secrets", { secrets: [], email: null, message: "Failed to load secrets." });
+    }
+});
+
+app.get("/submit", (req, res) => {
+    const email = req.query.email;
+    res.render("submit", { email: email });
+});
+
+app.post("/submit", async (req, res) => {
+    const secret = req.body.secret;
+    const email = req.body.email;
+
+    try {
+        const user = await User.findOne({ email: email });
+        if (user) {
+            user.secret = secret;
+            await user.save();
+            res.redirect(`/secrets?email=${email}`);
+        } else {
+            res.status(404).render("secrets", { secrets: [], email: null, message: "User not found." });
+        }
+    } catch (err) {
+        res.status(500).render("secrets", { secrets: [], email: null, message: "Failed to submit secret." });
+    }
+});
+
 app.get("/logout", (req, res) => {
     res.redirect("/");
 });
 
-// Submit Page
-app.get("/submit", (req, res) => {
-    res.render("submit");
-});
-
-// Handle Secret Submission
-app.post("/submit", (req, res) => {
-    const submittedSecret = req.body.secret;
-    console.log("Submitted secret:", submittedSecret);
-    res.render("secrets", { message: "Secret submitted successfully!" });
-});
-
-// Start Server
 app.listen(3000, () => {
     console.log("App is running on port 3000");
 });
