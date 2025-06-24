@@ -3,6 +3,12 @@
 <div class="container mt-5">
     <h1>Login</h1>
 
+    <% if (message) { %>
+        <div class="alert alert-danger" role="alert">
+            <%= message %>
+        </div>
+    <% } %>
+
     <div class="row">
         <div class="col-sm-8">
             <div class="card">
@@ -14,18 +20,20 @@
                         </div>
                         <div class="form-group">
                             <label for="password">Password</label>
-                            <input type="password" class="form-control" id="register-password" name="password" required> <input type="checkbox" onclick="togglePassword('register-password')"> Show Password
-        </label><br>
+                            <input type="password" class="form-control" id="register-password" name="password" required>
+                            <input type="checkbox" onclick="togglePassword('register-password')"> Show Password
                         </div>
                         <button type="submit" class="btn btn-dark">Login</button>
                     </form>
                 </div>
             </div>
         </div>
-    <!-- </div>
-</div> --> <script>
-        function togglePassword(id) {
-            const field = document.getElementById(id);
-            field.type = field.type === "password" ? "text" : "password";
-        }
-    </script>
+    </div>
+</div>
+
+<script>
+    function togglePassword(id) {
+        const field = document.getElementById(id);
+        field.type = field.type === "password" ? "text" : "password";
+    }
+</script>
