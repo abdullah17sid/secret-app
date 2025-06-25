@@ -3,9 +3,9 @@
 <div class="container mt-5 text-center">
     <h1>Welcome, <%= email %></h1>
     <p>This is your protected profile page.</p>
-        <a class="btn btn-light" href="/logout">Logout</a>
-
-    <a class="btn btn-dark" href="/secrets?email=<%= email %>">Go to Secrets Page</a>
+    
+    <a class="btn btn-light" href="/logout">Logout</a>
+    <a class="btn btn-dark" href="/secrets">Go to Secrets Page</a>
 </div>
 
 <%- include('partials/footer') %>
