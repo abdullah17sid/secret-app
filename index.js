@@ -15,107 +15,115 @@ mongoose.connect("mongodb+srv://abdullahsmsiddiqui:ZU35mdAOLGwh5hta@cluster0.akq
 
 // Schema
 const userSchema = new mongoose.Schema({
-    email: String,
-    password: String,
-    secret: String
+  email: String,
+  password: String,
+  secret: String
 });
 const User = mongoose.model("User", userSchema);
+
+// Simulated session storage (for single user only)
+let loggedInEmail = null;
 
 // Routes
 
 app.get("/", (req, res) => {
-    res.render("home");
+  loggedInEmail = null; // Clear email on homepage
+  res.render("home");
 });
 
 app.get("/register", (req, res) => {
-    res.render("register");
+  res.render("register");
 });
 
 app.post("/register", async (req, res) => {
-    try {
-        const newUser = new User({
-            email: req.body.username.trim(),
-            password: req.body.password.trim()
-        });
+  try {
+    const newUser = new User({
+      email: req.body.username.trim(),
+      password: req.body.password.trim()
+    });
 
-        await newUser.save();
-        res.redirect("/login");
-    } catch (err) {
-        res.status(500).send("Registration failed");
-    }
+    await newUser.save();
+    res.redirect("/login");
+  } catch (err) {
+    res.status(500).send("Registration failed");
+  }
 });
 
 app.get("/login", (req, res) => {
-    res.render("login", { message: null });
+  res.render("login", { message: null });
 });
 
 app.post("/login", async (req, res) => {
-    const email = req.body.username?.trim();
-    const password = req.body.password?.trim();
+  const email = req.body.username?.trim();
+  const password = req.body.password?.trim();
 
-    if (!email || !password) {
-        return res.render("login", { message: "Please enter both email and password." });
+  if (!email || !password) {
+    return res.render("login", { message: "Please enter both email and password." });
+  }
+
+  try {
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      return res.render("login", { message: "User not found. Please register first." });
     }
 
-    try {
-        const user = await User.findOne({ email: email });
-
-        if (!user) {
-            return res.render("login", { message: "User not found. Please register first." });
-        }
-
-        if (user.password === password) {
-            // Redirect to profile with email in query
-            res.redirect(`/profile?email=${user.email}`);
-        } else {
-            res.render("login", { message: "Incorrect password." });
-        }
-    } catch (err) {
-        res.status(500).render("login", { message: "Something went wrong during login." });
+    if (user.password === password) {
+      loggedInEmail = user.email;
+      res.redirect("/profile");
+    } else {
+      res.render("login", { message: "Incorrect password." });
     }
+  } catch (err) {
+    res.status(500).render("login", { message: "Something went wrong during login." });
+  }
 });
 
 app.get("/profile", (req, res) => {
-    const email = req.query.email;
-    res.render("profile", { email: email });
+  if (!loggedInEmail) return res.redirect("/login");
+  res.render("profile", { email: loggedInEmail });
 });
 
 app.get("/secrets", async (req, res) => {
-    try {
-        const secrets = await User.find({ secret: { $ne: null } });
-        res.render("secrets", { secrets: secrets, email: req.query.email || null, message: null });
-    } catch (err) {
-        res.status(500).render("secrets", { secrets: [], email: null, message: "Failed to load secrets." });
-    }
+  if (!loggedInEmail) return res.redirect("/login");
+
+  try {
+    const secrets = await User.find({ secret: { $ne: null } });
+    res.render("secrets", { secrets: secrets, email: loggedInEmail, message: null });
+  } catch (err) {
+    res.status(500).render("secrets", { secrets: [], email: null, message: "Failed to load secrets." });
+  }
 });
 
 app.get("/submit", (req, res) => {
-    const email = req.query.email;
-    res.render("submit", { email: email });
+  if (!loggedInEmail) return res.redirect("/login");
+  res.render("submit", { email: loggedInEmail });
 });
 
 app.post("/submit", async (req, res) => {
-    const secret = req.body.secret;
-    const email = req.body.email;
+  const secret = req.body.secret;
 
-    try {
-        const user = await User.findOne({ email: email });
-        if (user) {
-            user.secret = secret;
-            await user.save();
-            res.redirect(`/secrets?email=${email}`);
-        } else {
-            res.status(404).render("secrets", { secrets: [], email: null, message: "User not found." });
-        }
-    } catch (err) {
-        res.status(500).render("secrets", { secrets: [], email: null, message: "Failed to submit secret." });
+  if (!loggedInEmail) return res.redirect("/login");
+
+  try {
+    const user = await User.findOne({ email: loggedInEmail });
+    if (user) {
+      user.secret = secret;
+      await user.save();
+      res.redirect("/secrets");
+    } else {
+      res.status(404).render("secrets", { secrets: [], email: null, message: "User not found." });
     }
+  } catch (err) {
+    res.status(500).render("secrets", { secrets: [], email: null, message: "Failed to submit secret." });
+  }
 });
 
 app.get("/logout", (req, res) => {
-    res.redirect("/");
+  loggedInEmail = null;
+  res.redirect("/");
 });
 
 app.listen(3000, () => {
-    console.log("App is running on port 3000");
+  console.log("App is running on port 3000");
 });
